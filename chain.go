@@ -2,6 +2,8 @@
 
 package chttp
 
+import "golang.org/x/net/context"
+
 // ChainFunc is a function that's part of a chain
 type ChainFunc func(Handler) Handler
 
@@ -9,8 +11,8 @@ type ChainFunc func(Handler) Handler
 type Chain []ChainFunc
 
 // NewChain creates a new chain of ChainFuncs
-func NewChain(handlers ...ChainFunc) Chain {
-	return Chain(handlers)
+func NewChain(ctx context.Context, handlers ...ChainFunc) Chain {
+	return Chain(append(getDefaultChain(ctx), handlers...))
 }
 
 // Then assembles a chain and sets finalHandler as the last handler in the chain

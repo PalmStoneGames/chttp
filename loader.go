@@ -3,17 +3,12 @@
 package chttp
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
 	"golang.org/x/net/context"
 )
-
-// LoadingErrorHandler is the handler to be called when an error happens in one of the loaders
-// The default implementation will simply print to http.Error, but may be replaced
-var LoadingErrorHandler = func(ctx context.Context, err string) {
-	Error(ctx, err, http.StatusInternalServerError)
-}
 
 // LoaderFunc describes a function used to load in data
 // it should return a channel on which the data is sent and the key in which to store it
@@ -21,6 +16,9 @@ type LoaderFunc func(context.Context) (<-chan interface{}, interface{})
 
 // HandlerFunc describes a function to handle a http request
 type HandlerFunc func(context.Context)
+
+// LoadingErrorFunc is the signature of the function called when a loading error occurs
+type LoadingErrorFunc func(context.Context, error)
 
 // loaderKey is the type we use for our context keys so they can't conflict with any other module
 type loaderKey string
@@ -49,15 +47,15 @@ type Loader struct {
 }
 
 // NewLoader creates a new loader
-func NewLoader(handler Handler, loaders ...LoaderFunc) Loader {
+func NewLoader(ctx context.Context, handler Handler, loaders ...LoaderFunc) Loader {
 	return Loader{
 		handler: handler,
-		loaders: loaders,
+		loaders: append(getDefaultLoaders(ctx), loaders...),
 	}
 }
 
-func NewLoaderFunc(handler HandlerFunc, loaders ...LoaderFunc) Loader {
-	return NewLoader(handler, loaders...)
+func NewLoaderFunc(ctx context.Context, handler HandlerFunc, loaders ...LoaderFunc) Loader {
+	return NewLoader(ctx, handler, loaders...)
 }
 
 // ServeHTTP will serve a http request given a responseWriter and the request
@@ -96,10 +94,14 @@ func (l Loader) ServeHTTPContext(ctx context.Context) {
 			errText += fmt.Sprintf("%v: %v\n", k, !isFailed)
 		}
 
-		LoadingErrorHandler(ctx, errText)
+		getErrFunc(ctx)(ctx, errors.New(errText))
 		return
 	}
 
 	// Call the passed handler with all the data
 	l.handler.ServeHTTPContext(ctx)
+}
+
+func defaultErrFunc(ctx context.Context, err error) {
+	Error(ctx, err.Error(), http.StatusInternalServerError)
 }
