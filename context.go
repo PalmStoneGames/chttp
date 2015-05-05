@@ -30,7 +30,7 @@ func GetRequest(ctx context.Context) *http.Request {
 func GetWriter(ctx context.Context) http.ResponseWriter {
 	w := ctx.Value(loaderKey("writer"))
 	if w == nil {
-		return nil
+		panic("Attempted write on read only context")
 	}
 
 	return w.(http.ResponseWriter)
