@@ -18,10 +18,26 @@ func createContext(w http.ResponseWriter, r *http.Request) context.Context {
 
 // GetRequest will return the *http.Request given a context
 func GetRequest(ctx context.Context) *http.Request {
-	return ctx.Value(loaderKey("request")).(*http.Request)
+	r := ctx.Value(loaderKey("request"))
+	if r == nil {
+		return nil
+	}
+
+	return r.(*http.Request)
 }
 
 // GetWriter will return the http.ResponseWriter given a context
 func GetWriter(ctx context.Context) http.ResponseWriter {
-	return ctx.Value(loaderKey("writer")).(http.ResponseWriter)
+	w := ctx.Value(loaderKey("writer"))
+	if w == nil {
+		return nil
+	}
+
+	return w.(http.ResponseWriter)
+}
+
+// ReadOnlyContext returns a read only version of the context
+// The read only context lacks a http.ResponseWriter and GetWriter will return nil on it
+func ReadOnlyContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, loaderKey("writer"), nil)
 }
