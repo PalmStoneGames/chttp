@@ -42,6 +42,7 @@ func (h HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // Loader is a structure that can be used to schedule many parallel LoaderFuncs to be ran when the request is served
 // Each LoaderFunc is ran in parallel, if all run successfully, HandlerFunc will be called, otherwise, LoadingErrorHandler will be called
 type Loader struct {
+	ctx     context.Context
 	handler Handler
 	loaders []LoaderFunc
 }
@@ -49,6 +50,7 @@ type Loader struct {
 // NewLoader creates a new loader
 func NewLoader(ctx context.Context, handler Handler, loaders ...LoaderFunc) Loader {
 	return Loader{
+		ctx:     ctx,
 		handler: handler,
 		loaders: append(getDefaultLoaders(ctx), loaders...),
 	}
@@ -60,7 +62,13 @@ func NewLoaderFunc(ctx context.Context, handler HandlerFunc, loaders ...LoaderFu
 
 // ServeHTTP will serve a http request given a responseWriter and the request
 func (l Loader) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	l.ServeHTTPContext(createContext(w, r))
+	ctx := createContext(w, r)
+	creator := getRequestCreatorFunc(l.ctx)
+	if creator != nil {
+		ctx = creator(ctx)
+	}
+
+	l.ServeHTTPContext(ctx)
 }
 
 // ServeHTTPContext will serve a http request given a context
