@@ -1,4 +1,4 @@
-// Copyright 2015 Palm Stone Games, Inc. All rights reserved.
+// Copyright 2015 Palm Stone Games, Inc.
 
 package chttp
 

@@ -1,4 +1,4 @@
-// Copyright 2015 Palm Stone Games, Inc. All rights reserved.
+// Copyright 2015 Palm Stone Games, Inc.
 
 package chttp
 
@@ -36,11 +36,12 @@ func (h HandlerFunc) ServeHTTPContext(ctx context.Context) {
 
 // ServeHTTP will serve a http request given a responseWriter and the request
 func (h HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h(createContext(w, r))
+	h(createContext(nil, w, r))
 }
 
 // Loader is a structure that can be used to schedule many parallel LoaderFuncs to be ran when the request is served
 // Each LoaderFunc is ran in parallel, if all run successfully, HandlerFunc will be called, otherwise, LoadingErrorHandler will be called
+// A LoaderFunc is considered to be successful as long as it doesn't close its channel before sending on it once
 type Loader struct {
 	ctx     context.Context
 	handler Handler
@@ -56,19 +57,14 @@ func NewLoader(ctx context.Context, handler Handler, loaders ...LoaderFunc) Load
 	}
 }
 
+// NewLoaderFunc is a wrapper around NewLoader for when the handler is a HandlerFunc
 func NewLoaderFunc(ctx context.Context, handler HandlerFunc, loaders ...LoaderFunc) Loader {
 	return NewLoader(ctx, handler, loaders...)
 }
 
 // ServeHTTP will serve a http request given a responseWriter and the request
 func (l Loader) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := createContext(w, r)
-	creator := getRequestCreatorFunc(l.ctx)
-	if creator != nil {
-		ctx = creator(ctx)
-	}
-
-	l.ServeHTTPContext(ctx)
+	l.ServeHTTPContext(createContext(l.ctx, w, r))
 }
 
 // ServeHTTPContext will serve a http request given a context

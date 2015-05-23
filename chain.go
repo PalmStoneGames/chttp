@@ -1,8 +1,12 @@
-// Copyright 2015 Palm Stone Games, Inc. All rights reserved.
+// Copyright 2015 Palm Stone Games, Inc.
 
 package chttp
 
-import "golang.org/x/net/context"
+import (
+	"net/http"
+
+	"golang.org/x/net/context"
+)
 
 // ChainFunc is a function that's part of a chain
 type ChainFunc func(Handler) Handler
@@ -11,6 +15,11 @@ type ChainFunc func(Handler) Handler
 type Chain struct {
 	ctx   context.Context
 	funcs []ChainFunc
+}
+
+type chainHandler struct {
+	ctx     context.Context
+	handler Handler
 }
 
 // NewChain creates a new chain of ChainFuncs
@@ -28,19 +37,24 @@ func (chain Chain) Then(finalHandler Handler) Handler {
 		curr = chain.funcs[i](curr)
 	}
 
-	return chain.contextCreatorWrapper(curr)
+	return chainHandler{
+		ctx:     chain.ctx,
+		handler: curr,
+	}
 }
 
-func (chain Chain) contextCreatorWrapper(h Handler) Handler {
+func (chain chainHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	chain.ServeHTTPContext(createContext(chain.ctx, w, r))
+}
+
+func (chain chainHandler) ServeHTTPContext(ctx context.Context) {
 	wrapper := getRequestCreatorFunc(chain.ctx)
 
-	if wrapper == nil {
-		return h
+	if wrapper != nil {
+		ctx = wrapper(ctx)
 	}
 
-	return HandlerFunc(func(ctx context.Context) {
-		h.ServeHTTPContext(wrapper(ctx))
-	})
+	chain.handler.ServeHTTPContext(ctx)
 }
 
 // ThenFunc works similarly to Then, but accepts a HandlerFunc instead of a Handler
