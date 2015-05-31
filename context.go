@@ -30,7 +30,7 @@ func NewContext() Context {
 	return Context{context.Background()}
 }
 
-func createContext(parent context.Context, w http.ResponseWriter, r *http.Request) context.Context {
+func CreateContext(parent context.Context, w http.ResponseWriter, r *http.Request) context.Context {
 	ctx := parent
 	ctx = context.WithValue(ctx, keyRequest, r)
 	ctx = context.WithValue(ctx, keyWriter, w)

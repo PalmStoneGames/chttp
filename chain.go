@@ -44,7 +44,7 @@ func (chain Chain) Then(finalHandler Handler) Handler {
 }
 
 func (chain chainHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	chain.ServeHTTPContext(createContext(chain.ctx, w, r))
+	chain.ServeHTTPContext(CreateContext(chain.ctx, w, r))
 }
 
 func (chain chainHandler) ServeHTTPContext(ctx context.Context) {

@@ -36,7 +36,7 @@ func (h HandlerFunc) ServeHTTPContext(ctx context.Context) {
 
 // ServeHTTP will serve a http request given a responseWriter and the request
 func (h HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h(createContext(nil, w, r))
+	h(CreateContext(nil, w, r))
 }
 
 // Loader is a structure that can be used to schedule many parallel LoaderFuncs to be ran when the request is served
@@ -64,7 +64,7 @@ func NewLoaderFunc(ctx context.Context, handler HandlerFunc, loaders ...LoaderFu
 
 // ServeHTTP will serve a http request given a responseWriter and the request
 func (l Loader) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	l.ServeHTTPContext(createContext(l.ctx, w, r))
+	l.ServeHTTPContext(CreateContext(l.ctx, w, r))
 }
 
 // ServeHTTPContext will serve a http request given a context
