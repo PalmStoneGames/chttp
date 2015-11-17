@@ -38,9 +38,13 @@ type chainHandler struct {
 
 // NewChain creates a new chain of ChainFuncs
 func NewChain(ctx context.Context, handlers ...ChainFunc) Chain {
+	var funcs []ChainFunc
+	funcs = append(funcs, getDefaultChain(ctx)...)
+	funcs = append(funcs, handlers...)
 	return Chain{
 		ctx:   ctx,
-		funcs: append(getDefaultChain(ctx), handlers...)}
+		funcs: funcs,
+	}
 }
 
 // Then assembles a chain and sets finalHandler as the last handler in the chain

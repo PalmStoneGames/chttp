@@ -64,10 +64,13 @@ type Loader struct {
 
 // NewLoader creates a new loader
 func NewLoader(ctx context.Context, handler Handler, loaders ...LoaderFunc) Loader {
+	var funcs []LoaderFunc
+	funcs = append(funcs, getDefaultLoaders(ctx)...)
+	funcs = append(funcs, loaders...)
 	return Loader{
 		ctx:     ctx,
 		handler: handler,
-		loaders: append(getDefaultLoaders(ctx), loaders...),
+		loaders: funcs,
 	}
 }
 

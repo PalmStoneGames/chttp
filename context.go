@@ -135,10 +135,16 @@ func (ctx Context) WithLoadingErrorFunc(errFunc LoadingErrorFunc) Context {
 
 // WithDefaultLoaders returns a context on which all subsequent NewLoader calls will have these additional loaders prepended to it
 func (ctx Context) WithDefaultLoaders(defaultLoaders ...LoaderFunc) Context {
-	return Context{context.WithValue(ctx.Context, keyDefaultLoaders, append(getDefaultLoaders(ctx.Context), defaultLoaders...))}
+	var funcs []LoaderFunc
+	funcs = append(funcs, getDefaultLoaders(ctx.Context)...)
+	funcs = append(funcs, defaultLoaders...)
+	return Context{context.WithValue(ctx.Context, keyDefaultLoaders, funcs)}
 }
 
 // WithDefaultChain returns a context on which all subsequent NewChain calls with have the passed middleware prepended to it
 func (ctx Context) WithDefaultChain(defaultChain ...ChainFunc) Context {
-	return Context{context.WithValue(ctx.Context, keyDefaultChain, append(getDefaultChain(ctx.Context), defaultChain...))}
+	var funcs []ChainFunc
+	funcs = append(funcs, getDefaultChain(ctx.Context)...)
+	funcs = append(funcs, defaultChain...)
+	return Context{context.WithValue(ctx.Context, keyDefaultChain, funcs)}
 }
